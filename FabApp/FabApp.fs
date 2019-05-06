@@ -39,7 +39,7 @@ module App =
         let check = [for i in model.Board do
                         for j in i -> if j = X then 1 else if j = O then -1 else 0]
 
-        X
+        None
     let update msg model =
         match msg with
         | Increment -> { model with Count = model.Count + model.Step }, Cmd.none
