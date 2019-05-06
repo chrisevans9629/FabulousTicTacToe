@@ -5,7 +5,7 @@ open System.Diagnostics
 open Fabulous.Core
 open Fabulous.DynamicViews
 open Xamarin.Forms
-
+open System.Linq
 module App = 
     type Player =
         X | O | None
@@ -26,6 +26,7 @@ module App =
         //| TimerToggled of bool
         //| TimedTick
         | PlacePiece of int * int
+        | ResetGame
         
 
     let initModel = { IsX=true; Board = [for r in 0..2 -> [for c in 0..2 -> None]]; Winner = None}
@@ -36,10 +37,10 @@ module App =
     //    async { do! Async.Sleep 200
     //            return TimedTick }
     //    |> Cmd.ofAsyncMsg
-    let checkForWinnder model r c =
-        let check = [for i in model.Board do
-                        for j in i -> if j = X then 1 else if j = O then -1 else 0]
-
+    let checkForWinnder (model: Player list list) =
+        let check = [for r in model -> r.Select(fun t -> match t with | X -> 1 | O -> -1 | _ -> 0).Sum()]
+        if check.Any(fun r -> r = 3) then X else
+        if check.Any(fun r -> r = -3) then O else
         None
     let update msg model =
         match msg with
@@ -53,11 +54,15 @@ module App =
         //        { model with Count = model.Count + model.Step }, timerCmd
         //    else 
         //        model, Cmd.none
+        | ResetGame ->
+            initModel, Cmd.none
         | PlacePiece (r,c) ->
             if model.IsX then
-                { model with IsX = false; Board=[for row in 0..2 -> [for col in 0..2 -> if r = row && c = col then X else model.Board.[row].[col]]]; Winner = checkForWinnder model r c}, Cmd.none
+                let board = [for row in 0..2 -> [for col in 0..2 -> if r = row && c = col then X else model.Board.[row].[col]]]
+                { model with IsX = false; Board=board; Winner = checkForWinnder board}, Cmd.none
             else
-                { model with IsX = true; Board=[for row in 0..2 -> [for col in 0..2 -> if r = row && c = col then O else model.Board.[row].[col]]]; Winner = checkForWinnder model r c}, Cmd.none
+                let board = [for row in 0..2 -> [for col in 0..2 -> if r = row && c = col then O else model.Board.[row].[col]]]
+                { model with IsX = true; Board=board; Winner = checkForWinnder board}, Cmd.none
     //let mainPage model dispatch =
     //    View.ContentPage(title="Counter",
     //        content = View.StackLayout(padding = 20.0, verticalOptions = LayoutOptions.Center,
@@ -77,7 +82,11 @@ module App =
                 View.Grid(
                     rowdefs = [box "1*";box "2*"],
                     children = [
-                        View.Label(text = sprintf "Player %s's Turn" (if model.Winner <> None then "Game Over!" else if model.IsX then "X" else "O")).GridRow(0)
+                        View.StackLayout(children = [
+                                View.Label(text = sprintf "Player %s's Turn" (if model.Winner <> None then "Game Over!" else if model.IsX then "X" else "O"))
+                                View.Button(text= "Reset Game", command = (fun () -> dispatch ResetGame))
+                            ]).GridRow(0)
+                        
                         View.Grid(
                                 rowdefs = [for i in 1..3 -> box "*"],
                                 coldefs = [for i in 1..3 -> box "*"],
