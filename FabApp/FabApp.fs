@@ -10,31 +10,32 @@ module App =
     type Player =
         X | O | None
     type Model = 
-      { Count : int
-        Step : int
-        TimerOn: bool
+      { 
+        //Count : int
+        //Step : int
+        //TimerOn: bool
         IsX : bool
         Board : Player list list
         Winner : Player}
 
     type Msg = 
-        | Increment 
-        | Decrement 
-        | Reset
-        | SetStep of int
-        | TimerToggled of bool
-        | TimedTick
+        //| Increment 
+        //| Decrement 
+        //| Reset
+        //| SetStep of int
+        //| TimerToggled of bool
+        //| TimedTick
         | PlacePiece of int * int
         
 
-    let initModel = { Count = 0; Step = 1; TimerOn=false; IsX=true; Board = [for r in 0..2 -> [for c in 0..2 -> None]]; Winner = None}
+    let initModel = { IsX=true; Board = [for r in 0..2 -> [for c in 0..2 -> None]]; Winner = None}
 
     let init () = initModel, Cmd.none
 
-    let timerCmd = 
-        async { do! Async.Sleep 200
-                return TimedTick }
-        |> Cmd.ofAsyncMsg
+    //let timerCmd = 
+    //    async { do! Async.Sleep 200
+    //            return TimedTick }
+    //    |> Cmd.ofAsyncMsg
     let checkForWinnder model r c =
         let check = [for i in model.Board do
                         for j in i -> if j = X then 1 else if j = O then -1 else 0]
@@ -42,16 +43,16 @@ module App =
         None
     let update msg model =
         match msg with
-        | Increment -> { model with Count = model.Count + model.Step }, Cmd.none
-        | Decrement -> { model with Count = model.Count - model.Step }, Cmd.none
-        | Reset -> init ()
-        | SetStep n -> { model with Step = n }, Cmd.none
-        | TimerToggled on -> { model with TimerOn = on }, (if on then timerCmd else Cmd.none)
-        | TimedTick -> 
-            if model.TimerOn then 
-                { model with Count = model.Count + model.Step }, timerCmd
-            else 
-                model, Cmd.none
+        //| Increment -> { model with Count = model.Count + model.Step }, Cmd.none
+        //| Decrement -> { model with Count = model.Count - model.Step }, Cmd.none
+        //| Reset -> init ()
+        //| SetStep n -> { model with Step = n }, Cmd.none
+        //| TimerToggled on -> { model with TimerOn = on }, (if on then timerCmd else Cmd.none)
+        //| TimedTick -> 
+        //    if model.TimerOn then 
+        //        { model with Count = model.Count + model.Step }, timerCmd
+        //    else 
+        //        model, Cmd.none
         | PlacePiece (r,c) ->
             if model.IsX then
                 { model with IsX = false; Board=[for row in 0..2 -> [for col in 0..2 -> if r = row && c = col then X else model.Board.[row].[col]]]; Winner = checkForWinnder model r c}, Cmd.none
