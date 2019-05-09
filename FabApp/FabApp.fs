@@ -6,25 +6,19 @@ open Fabulous.Core
 open Fabulous.DynamicViews
 open Xamarin.Forms
 open System.Linq
+open System
+
 module App = 
     type Player =
         X | O | None
     type Model = 
       { 
-        //Count : int
-        //Step : int
-        //TimerOn: bool
         IsX : bool
         Board : Player list list
-        Winner : Player}
+        Winner : Player
+      }
 
     type Msg = 
-        //| Increment 
-        //| Decrement 
-        //| Reset
-        //| SetStep of int
-        //| TimerToggled of bool
-        //| TimedTick
         | PlacePiece of int * int
         | ResetGame
         
@@ -38,9 +32,6 @@ module App =
     //            return TimedTick }
     //    |> Cmd.ofAsyncMsg
     let checkForWinnder (model: Player list list) =
-        //let check = [for r in model -> r.Select(fun t -> match t with | X -> 1 | O -> -1 | _ -> 0).Sum()]
-        //if check.Any(fun r -> r = 3) then X else
-        //if check.Any(fun r -> r = -3) then O else
         let check (list: Player list) = 
             let sum = list.Select(fun t -> match t with | X -> 1 | O -> -1 | _ -> 0).Sum()
             if sum = 3 then X else if sum = -3 then O else None
@@ -60,40 +51,20 @@ module App =
         if checks.Any(fun r -> check r = X) then X
         else if checks.Any(fun r -> check r = O) then O
         else None
+    let updateBoard (model: Player list list) r c player =
+        let board = [for row in 0..2 -> [for col in 0..2 -> if r = row && c = col then player else model.[row].[col]]]
+        board
     let update msg model =
         match msg with
-        //| Increment -> { model with Count = model.Count + model.Step }, Cmd.none
-        //| Decrement -> { model with Count = model.Count - model.Step }, Cmd.none
-        //| Reset -> init ()
-        //| SetStep n -> { model with Step = n }, Cmd.none
-        //| TimerToggled on -> { model with TimerOn = on }, (if on then timerCmd else Cmd.none)
-        //| TimedTick -> 
-        //    if model.TimerOn then 
-        //        { model with Count = model.Count + model.Step }, timerCmd
-        //    else 
-        //        model, Cmd.none
         | ResetGame ->
             initModel, Cmd.none
         | PlacePiece (r,c) ->
             if model.IsX then
-                let board = [for row in 0..2 -> [for col in 0..2 -> if r = row && c = col then X else model.Board.[row].[col]]]
+                let board = updateBoard model.Board r c X
                 { model with IsX = false; Board=board; Winner = checkForWinnder board}, Cmd.none
             else
-                let board = [for row in 0..2 -> [for col in 0..2 -> if r = row && c = col then O else model.Board.[row].[col]]]
+                let board = updateBoard model.Board r c O
                 { model with IsX = true; Board=board; Winner = checkForWinnder board}, Cmd.none
-    //let mainPage model dispatch =
-    //    View.ContentPage(title="Counter",
-    //        content = View.StackLayout(padding = 20.0, verticalOptions = LayoutOptions.Center,
-    //          children = [ 
-    //              View.Label(text = sprintf "%d" model.Count, horizontalOptions = LayoutOptions.Center, widthRequest=200.0, horizontalTextAlignment=TextAlignment.Center)
-    //              View.Button(text = "Increment", command = (fun () -> dispatch Increment), horizontalOptions = LayoutOptions.Center)
-    //              View.Button(text = "Decrement", command = (fun () -> dispatch Decrement), horizontalOptions = LayoutOptions.Center)
-    //              View.Label(text = "Timer", horizontalOptions = LayoutOptions.Center)
-    //              View.Switch(isToggled = model.TimerOn, toggled = (fun on -> dispatch (TimerToggled on.Value)), horizontalOptions = LayoutOptions.Center)
-    //              View.Slider(minimumMaximum = (0.0, 10.0), value = double model.Step, valueChanged = (fun args -> dispatch (SetStep (int (args.NewValue + 0.5)))), horizontalOptions = LayoutOptions.FillAndExpand)
-    //              View.Label(text = sprintf "Step size: %d" model.Step, horizontalOptions = LayoutOptions.Center) 
-    //              View.Button(text = "Reset", horizontalOptions = LayoutOptions.Center, command = (fun () -> dispatch Reset), canExecute = (model <> initModel))
-    //          ]))
     let ticTacToe model dispatch =
         View.ContentPage(title="Tic Tac Toe",
             content =

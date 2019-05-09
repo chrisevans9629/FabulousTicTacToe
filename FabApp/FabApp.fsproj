@@ -5,6 +5,10 @@
     <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;APPSAVE</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="FabApp.fs" />
   </ItemGroup>
