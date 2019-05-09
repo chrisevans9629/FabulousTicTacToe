@@ -38,10 +38,28 @@ module App =
     //            return TimedTick }
     //    |> Cmd.ofAsyncMsg
     let checkForWinnder (model: Player list list) =
-        let check = [for r in model -> r.Select(fun t -> match t with | X -> 1 | O -> -1 | _ -> 0).Sum()]
-        if check.Any(fun r -> r = 3) then X else
-        if check.Any(fun r -> r = -3) then O else
-        None
+        //let check = [for r in model -> r.Select(fun t -> match t with | X -> 1 | O -> -1 | _ -> 0).Sum()]
+        //if check.Any(fun r -> r = 3) then X else
+        //if check.Any(fun r -> r = -3) then O else
+        let check (list: Player list) = 
+            let sum = list.Select(fun t -> match t with | X -> 1 | O -> -1 | _ -> 0).Sum()
+            if sum = 3 then X else if sum = -3 then O else None
+        
+        let top = model.[0]
+        let mid = model.[1]
+        let bottom = model.[2]
+
+        let first = [model.[0].[0];model.[1].[0];model.[2].[0]]
+        let second = [model.[0].[1];model.[1].[1];model.[1].[1]]
+        let third = [model.[0].[2];model.[1].[2];model.[2].[2]]
+
+        let diag = [model.[0].[0];model.[1].[1];model.[2].[2]]
+        let otherDiag = [model.[0].[2];model.[1].[1];model.[2].[0]]
+
+        let checks = [top;mid;bottom;first;second;third;diag;otherDiag]
+        if checks.Any(fun r -> check r = X) then X
+        else if checks.Any(fun r -> check r = O) then O
+        else None
     let update msg model =
         match msg with
         //| Increment -> { model with Count = model.Count + model.Step }, Cmd.none
@@ -94,7 +112,7 @@ module App =
                                     for r in 0..2 do
                                         for c in 0..2 ->
                                             View.Button(
-                                                text = model.Board.[r].[c].ToString(), 
+                                                text = (if model.Board.[r].[c] <> None then model.Board.[r].[c].ToString() else ""), 
                                                 fontSize = 48,  
                                                 command= (fun () -> if model.Board.[r].[c] = None && model.Winner = None then dispatch (PlacePiece (r,c)) else ())
                                                 ).GridRow(r).GridColumn(c)
