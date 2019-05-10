@@ -3,6 +3,9 @@ namespace Tests
 open NUnit.Framework
 open FabApp
 open FabApp.App
+open Fabulous.Core
+open Fabulous.DynamicViews
+open System.Linq
 [<TestClass>]
 type TestClass () =
 
@@ -91,3 +94,23 @@ type TestClass () =
         let win = App.checkForWinnder addX
 
         Assert.AreEqual(win, None)
+    [<Test>]
+    member this.CoinNotNull()=
+        let model = App.initModel
+        Assert.NotNull(model.Coin)
+
+    [<Test>]
+    member this.``Coin is not null when updated``()=
+        let model,_ = App.initModel |> App.update FlipCoin
+
+        Assert.NotNull(model.Coin)
+    
+    [<Test>]
+    member this.``Box View gesture no exception``()=
+        let view = ContentPageViewer(App.coinFlipView App.initModel (fun e-> ()))
+
+        let box = BoxViewViewer(view.Content)
+
+        let gesture = TapGestureRecognizerViewer( box.GestureRecognizers.First())
+
+        gesture.Command.Execute()

@@ -9,6 +9,10 @@ open System.Linq
 open System
 
 module App = 
+    type CoinModel = 
+        {
+            Animating : bool
+        }
     type Player =
         X | O | None
     type Model = 
@@ -16,14 +20,17 @@ module App =
         IsX : bool
         Board : Player list list
         Winner : Player
+        Coin : CoinModel
       }
 
     type Msg = 
         | PlacePiece of int * int
         | ResetGame
-        
+        | FlipCoin
+        | CoinGrow
+        | CoinShrink
 
-    let initModel = { IsX=true; Board = [for r in 0..2 -> [for c in 0..2 -> None]]; Winner = None}
+    let initModel = { IsX=true; Board = [for r in 0..2 -> [for c in 0..2 -> None]]; Winner = None; Coin = {Animating = false}}
 
     let init () = initModel, Cmd.none
 
@@ -54,6 +61,24 @@ module App =
     let updateBoard (model: Player list list) r c player =
         let board = [for row in 0..2 -> [for col in 0..2 -> if r = row && c = col then player else model.[row].[col]]]
         board
+    let animatedCoinRef = ViewRef<BoxView>()
+   
+    let animateCmd (msg: Msg) = 
+        async {
+            match animatedCoinRef.TryValue with
+            | Option.None -> return CoinGrow
+            | Some c -> 
+               let! t = c.RelScaleTo(10.,uint32(1000), Easing.Linear) |> Async.AwaitTask
+               return CoinGrow
+        } |> Cmd.ofAsyncMsg
+    let animateCmd2 (msg: Msg) = 
+        async {
+            match animatedCoinRef.TryValue with
+            | Option.None -> return CoinGrow
+            | Some c -> 
+               let! t = c.RelScaleTo(-10.,uint32(1000), Easing.Linear) |> Async.AwaitTask
+               return CoinShrink
+        } |> Cmd.ofAsyncMsg
     let update msg model =
         match msg with
         | ResetGame ->
@@ -65,7 +90,12 @@ module App =
             else
                 let board = updateBoard model.Board r c O
                 { model with IsX = true; Board=board; Winner = checkForWinnder board}, Cmd.none
-    let ticTacToe model dispatch =
+        | FlipCoin ->
+                {model with Coin = {model.Coin with Animating = true}}, animateCmd msg
+        | CoinGrow -> model, animateCmd2 msg
+        | CoinShrink -> {model with Coin = {model.Coin with Animating = false}}, Cmd.none
+       
+    let ticTacToeView model dispatch =
         View.ContentPage(title="Tic Tac Toe",
             content =
                 View.Grid(
@@ -90,11 +120,22 @@ module App =
                                     ]).GridRow(1)
                     ])
               )
+    
+
+    let coinFlipView (model: Model) dispatch =
+        View.ContentPage(title="Coin Flip", 
+            content=View.BoxView(
+                cornerRadius=new CornerRadius(10.), 
+                horizontalOptions = LayoutOptions.CenterAndExpand,
+                verticalOptions = LayoutOptions.CenterAndExpand,
+                ref=animatedCoinRef, 
+                backgroundColor = Color.Gold,
+                gestureRecognizers=[View.TapGestureRecognizer(command= (fun ()-> if model.Coin.Animating = false then dispatch FlipCoin else ()))]))
     let view (model: Model) dispatch =
         View.TabbedPage(children= 
             [
-                //mainPage model dispatch
-                ticTacToe model dispatch
+                ticTacToeView model dispatch
+                coinFlipView model dispatch
             ])
    
 
